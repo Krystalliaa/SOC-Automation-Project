@@ -219,4 +219,374 @@
 
 <p>This will take you to the Wazuh dashboard where you can begin managing your security information and event management (SIEM) system.</p>
 
+<h2>Setting up TheHive on a DigitalOcean Droplet</h2>
 
+<p>Following the setup of the Wazuh Manager, we will now create a separate Droplet to host TheHive, our case management platform. We will use a similar procedure as with the Wazuh Droplet and configure the firewall to allow access.</p>
+
+
+<h3>Steps to Create TheHive Droplet</h3>
+
+<ol>
+    <li><strong>Access the Control Panel:</strong> Log in to the DigitalOcean control panel.</li>
+    <li><strong>Create a New Droplet:</strong> Click the "Create" button in the top right corner and select "Droplets".</li>
+    <li><strong>Choose a Region:</strong> Select the same region you used for the Wazuh Droplet for better performance and lower latency.</li>
+    <li><strong>Select an Operating System:</strong> Choose "Ubuntu" as the operating system.</li>
+    <li><strong>Select a Plan:</strong> Choose the "Basic" plan.</li>
+    <li><strong>Select CPU Options:</strong> Choose "Premium Intel".</li>
+    <li><strong>Select Droplet Size (Memory):</strong> Select a Droplet size with at least 8 GB of RAM.</li>
+    <li><strong>Choose an Authentication Method:</strong> Choose the same authentication method (Password or SSH Key) you used for the Wazuh Droplet to maintain consistency. If using a password, ensure you create a strong password and save it securely.</li>
+    <li><strong>Choose a Hostname:</strong> Give your Droplet a descriptive hostname, such as "TheHive".</li>
+    <li><strong>Create the Droplet:</strong> Click the "Create Droplet" button.</li>
+</ol>
+
+<h3>Adding TheHive Droplet to the Firewall</h3>
+
+<p>Now, we will add the newly created TheHive Droplet to the existing firewall to allow access:</p>
+
+<ol>
+    <li><strong>Access Firewalls:</strong> In the left menu, select "Networking" and then "Firewalls".</li>
+    <li><strong>Select Your Firewall:</strong> Click on the name of the firewall you created for the Wazuh Droplet (e.g., "Wazuh Firewall").</li>
+    <li><strong>Add TheHive Droplet:</strong>
+        <ol type="a">
+            <li>In the firewall configuration page, locate the "Droplets" section.</li>
+            <li>Click "Add Droplets".</li>
+            <li>Start typing the hostname of your TheHive Droplet ("TheHive") and select it from the suggestions.</li>
+            <li>Click "Add droplet".</li>
+        </ol>
+    </li>
+</ol>
+
+<p>By adding TheHive to the existing firewall, we ensure that the same security rules apply to both the Wazuh and TheHive Droplets, simplifying management and maintaining a consistent security posture.</p>
+
+<h2>Installing TheHive on Your Droplet</h2>
+
+<p>This section details the installation of TheHive 5 and its necessary dependencies (Java, Cassandra, and Elasticsearch) on your DigitalOcean Droplet after you have connected via SSH.</p>
+
+<h3>1. Updating System Packages</h3>
+
+<p>Before installing any new software, it's crucial to update the system's package lists and upgrade existing packages to their latest versions. You can run the following command:</p>
+
+<pre><code>apt-get update && apt-get upgrade -y</code></pre>
+
+<p><strong>Explanation:</strong></p>
+<p><code>apt-get update</code>: Retrieves the latest package information from the configured repositories.</p>
+<p><code>apt-get upgrade -y</code>: Upgrades all upgradable packages on the system. The `-y` flag automatically answers "yes" to any prompts, automating the process.</p>
+<p><strong>Note:</strong> The <code>&&</code> allows you to run multiple commands sequentially. The second command will only execute if the first command is successful.</p>
+
+<h3>2. Installing Dependencies</h3>
+
+<p>TheHive relies on several dependencies. Install them using the following command:</p>
+
+<pre><code>apt install wget gnupg apt-transport-https git ca-certificates ca-certificates-java curl software-properties-common python3-pip lsb-release</code></pre>
+
+<h3>3. Installing Java</h3>
+
+<p>TheHive requires Java. We will install Amazon Corretto 11. You can run the following commands one by one, or you can copy and paste the entire block to execute them sequentially:</p>
+
+<pre><code># Import the Amazon Corretto Java 11 signing key
+wget -qO- https://apt.corretto.aws/corretto.key | sudo gpg --dearmor -o /usr/share/keyrings/corretto.gpg
+
+# Add the Amazon Corretto Java 11 repository
+echo "deb [signed-by=/usr/share/keyrings/corretto.gpg] https://apt.corretto.aws stable main" | sudo tee -a /etc/apt/sources.list.d/corretto.sources.list
+
+# Update package lists
+sudo apt update
+
+# Install Java
+sudo apt install java-common java-11-amazon-corretto-jdk
+
+# Set JAVA_HOME environment variable
+echo 'JAVA_HOME="/usr/lib/jvm/java-11-amazon-corretto"' | sudo tee -a /etc/environment
+
+# Export the JAVA_HOME environment variable (optional but recommended)
+export JAVA_HOME="/usr/lib/jvm/java-11-amazon-corretto"
+</code></pre>
+
+<p><strong>Explanation:</strong> These commands add the Amazon Corretto repository, install the JDK, and set the <code>JAVA_HOME</code> environment variable.</p>
+<p><strong>Note:</strong> You can run all these commands at once by copying and pasting the entire block into your terminal.</p>
+
+<h3>4. Installing Cassandra</h3>
+
+<p>Cassandra is used as the database for TheHive. Install it using these commands. You can copy and paste the entire block to run them sequentially:</p>
+
+<pre><code># Import the Apache Cassandra signing key
+wget -qO- https://downloads.apache.org/cassandra/KEYS | sudo gpg --dearmor -o /usr/share/keyrings/cassandra-archive.gpg
+
+# Add the Apache Cassandra repository
+echo "deb [signed-by=/usr/share/keyrings/cassandra-archive.gpg] https://debian.cassandra.apache.org 40x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+
+# Update package lists
+sudo apt update
+
+# Install Cassandra
+sudo apt install cassandra
+</code></pre>
+
+<p><strong>Explanation:</strong> These commands add the Cassandra repository and install the Cassandra database.</p>
+<p><strong>Note:</strong> You can run all these commands at once by copying and pasting the entire block into your terminal.</p>
+
+<h3>5. Installing Elasticsearch</h3>
+
+<p>Elasticsearch is used for indexing and searching data within TheHive. Install it with the following commands. You can copy and paste the entire block to run them sequentially:</p>
+
+<pre><code># Import the ElasticSearch signing key
+wget -qO- https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
+
+# Install apt-transport-https (if not already installed)
+sudo apt-get install apt-transport-https
+
+# Add the ElasticSearch repository
+echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+
+# Update package lists
+sudo apt update
+
+# Install Elasticsearch
+sudo apt install elasticsearch
+
+# **Optional Elasticsearch Configuration**
+
+# Create a jvm.options file (optional) and add the following lines to configure memory allocation:
+
+# -Dlog4j2.formatMsgNoLookups=true
+# -Xms2g
+# -Xmx2g
+
+# (Replace the memory values with your desired allocation)
+</code></pre>
+
+<p><strong>Explanation:</strong> These commands add the Elastic repository, install Elasticsearch, and provide optional settings for the JVM.</p>
+<p><strong>Note:</strong> You can run all these commands at once by copying and pasting the entire block into your terminal.</p>
+
+<h3>6. Installing TheHive</h3>
+
+<p>Finally, install TheHive itself. You can copy and paste the entire block to run them sequentially:</p>
+
+<pre><code># Import the Strangebee signing key
+wget -O- https://archives.strangebee.com/keys/strangebee.gpg | sudo gpg --dearmor -o /usr/share/keyrings/strangebee-archive-keyring.gpg
+
+# Add the Strangebee repository
+echo 'deb [signed-by=/usr/share/keyrings/strangebee-archive-keyring.gpg] https://deb.strangebee.com thehive-5.2 main' | sudo tee -a /etc/apt/sources.list.d/strangebee.list
+
+# Update package lists
+sudo apt-get update
+
+# Install TheHive
+sudo apt-get install -y thehive
+</code></pre>
+
+<p><strong>Explanation:</strong> These commands add the Strangebee repository and install TheHive.</p>
+<p><strong>Note:</strong> You can run all these commands at once by copying and pasting the entire block into your terminal.</p>
+
+
+<h2>Configuring TheHive: Cassandra and Elasticsearch</h2>
+
+<p>This section details the configuration of Cassandra and Elasticsearch, the database and search engine used by TheHive, on your DigitalOcean Droplet.</p>
+
+<h3>1. Configuring Cassandra</h3>
+
+<p>Cassandra serves as the database for TheHive. We need to modify its configuration file to ensure it listens on the correct IP address.</p>
+
+<ol>
+    <li><strong>Edit the Cassandra Configuration File:</strong> Open the Cassandra configuration file using `nano`:
+        <pre><code>nano /etc/cassandra/cassandra.yaml</code></pre>
+    </li>
+    <li><strong>Modify Listen Addresses:</strong>
+        <ol type="a">
+            <li>Press <code>Ctrl + W</code> to open the search function in `nano`.</li>
+            <li>Search for <code>listen_address</code> and replace the existing value with the public IP address of your TheHive Droplet.</li>
+            <li>Repeat the search and replace for <code>rpc_address</code>, also using your TheHive Droplet's public IP.</li>
+        </ol>
+    </li>
+    <li><strong>Update Seed Nodes:</strong>
+        <ol type="a">
+            <li>Search for <code>seeds</code>.</li>
+            <li>Replace the existing seed addresses with your TheHive Droplet's public IP address followed by <code>:7000</code>.</li>
+            <li><strong>Important:</strong> Ensure you leave the <code>:7000</code> port specification unchanged.</li>
+        </ol>
+    </li>
+    <li><strong>Save and Exit `nano`:</strong>
+        <ol type="a">
+            <li>Press <code>Ctrl + X</code> to exit.</li>
+            <li>Type <code>y</code> and press <code>Enter</code> to confirm saving the changes.</li>
+        </ol>
+    </li>
+    <li><strong>Stop and Restart Cassandra:</strong>
+        <ol type="a">
+            <li>Stop the Cassandra service:
+                <pre><code>systemctl stop cassandra.service</code></pre>
+            </li>
+            <li><strong>Important:</strong> Because we installed TheHive using their package, we need to remove old data files:
+                <pre><code>rm -rf /var/lib/cassandra/*</code></pre>
+            </li>
+            <li>Start the Cassandra service again:
+                <pre><code>systemctl start cassandra.service</code></pre>
+            </li>
+        </ol>
+    </li>
+        <li><strong>Verify Cassandra Status:</strong>
+        <ol type="a">
+            <li>Check the Cassandra service status:
+                <pre><code>systemctl status cassandra.service</code></pre>
+            </li>
+            <li>Exit the status viewer by pressing <code>q</code>.</li>
+        </ol>
+    </li>
+</ol>
+
+<h3>2. Configuring Elasticsearch</h3>
+
+<p>Elasticsearch is used for indexing and searching data within TheHive. We need to configure it to work correctly with our setup.</p>
+
+<ol>
+    <li><strong>Edit the Elasticsearch Configuration File:</strong> Open the Elasticsearch configuration file with `nano`:
+    <pre><code>nano /etc/elasticsearch/elasticsearch.yml</code></pre>
+    </li>
+    <li><strong>Set Cluster Name:</strong>
+        <ol type="a">
+            <li>Uncomment the <code>cluster.name</code> line (remove the <code>#</code>).</li>
+            <li>Change its value to <code>"thehive"</code>.</li>
+        </ol>
+    </li>
+    <li><strong>Define Node Name:</strong>
+        <ol type="a">
+            <li>Uncomment the <code>node.name</code> line.</li>
+            <li>Leave its value as <code>node-1</code> (assuming this is your only Elasticsearch node).</li>
+        </ol>
+    </li>
+    <li><strong>Configure Network Settings:</strong>
+        <ol type="a">
+            <li>Uncomment the <code>network.host</code> line.</li>
+            <li>Change its value to the public IP address of your TheHive Droplet.</li>
+            <li>Uncomment the <code>http.port</code> line and leave it set to <code>9200</code>.</li>
+        </ol>
+    </li>
+    <li><strong>Set Cluster Discovery:</strong>
+        <ol type="a">
+            <li>Uncomment the <code>cluster.initial_master_nodes</code> line.</li>
+            <li>Remove <code>node-2</code> from within the brackets (if present, as we only have one node).</li>
+        </ol>
+    </li>
+    <li><strong>Save and Exit `nano`:</strong>
+        <ol type="a">
+            <li>Press <code>Ctrl + X</code> to exit.</li>
+            <li>Type <code>y</code> and press <code>Enter</code> to confirm saving the changes.</li>
+        </ol>
+    </li>
+    <li><strong>Start and Enable Elasticsearch:</strong>
+        <ol type="a">
+            <li>Start the Elasticsearch service:
+                <pre><code>systemctl start elasticsearch.service</code></pre>
+            </li>
+            <li>Enable the Elasticsearch service to start on boot:
+                <pre><code>systemctl enable elasticsearch.service</code></pre>
+            </li>
+        </ol>
+    </li>
+        <li><strong>Verify Elasticsearch Status:</strong>
+        <ol type="a">
+            <li>Check the Elasticsearch service status:
+                <pre><code>systemctl status elasticsearch.service</code></pre>
+            </li>
+            <li>Exit the status viewer by pressing <code>q</code>.</li>
+        </ol>
+    </li>
+</ol>
+
+
+
+<h2>Configuring TheHive</h2>
+
+<p>This section guides you through configuring TheHive, ensuring it uses the correct IP address and is accessible from your browser.</p>
+
+<h3>1. Granting Ownership to TheHive User</h3>
+
+<p>Before modifying TheHive's configuration file, ensure the <code>thehive</code> user and group have ownership of the TheHive directory.</p>
+
+<ol>
+    <li><strong>Verify Current Permissions:</strong>
+        <ol type="a">
+            <li>Use <code>ls -la /opt/thp</code> to check the access permissions for the <code>/opt/thp</code> directory (TheHive directory).</li>
+            <li>The output (permissions.png) should show <code>root</code> as the owner. We need to change this.</li>
+        </ol>
+    </li>
+    <li><strong>Change Ownership:</strong>
+        <ol type="a">
+            <li>Run the following command to grant ownership of <code>/opt/thp</code> and its contents to the <code>thehive</code> user and group:
+                <pre><code>chown -R thehive:thehive /opt/thp</code></pre>
+                <p>The <code>-R</code> flag ensures ownership changes are applied recursively to all files and subdirectories within <code>/opt/thp</code>.</p>
+            </li>
+        </ol>
+    </li>
+    <li><strong>Verify Ownership Change:</strong>
+        <ol type="a">
+            <li>Run <code>ls -la /opt/thp</code> again. The output should now show <code>thehive</code> as the owner.</li>
+        </ol>
+    </li>
+</ol>
+
+<h3>2. Modifying TheHive Configuration File</h3>
+
+<p>Now, we'll edit TheHive's configuration file to set the correct hostnames and base URL.</p>
+
+<ol>
+    <li><strong>Edit the Configuration File:</strong>
+        <ol type="a">
+            <li>Open the TheHive configuration file with <code>nano</code>:
+               <pre><code>nano /etc/thehive/application.conf</code></pre>
+            </li>
+        </ol>
+    </li>
+    <li><strong>Update Hostnames:</strong>
+        <ol type="a">
+            <li>Scroll down and locate settings for <code>storage.hostname</code> and <code>index.search.hostname</code>.</li>
+            <li>Change these values to your TheHive Droplet's public IP address.</li>
+        </ol>
+    </li>
+    <li><strong>Update Base URL:</strong>
+        <ol type="a">
+            <li>Scroll down and in the <code>application.baseUrl</code> delete the Ip And insert the public ip of your thehive and leave the <code>:9000</code> as is.</li>
+        </ol>
+    </li>
+    <li><strong>Save and Exit `nano`:</strong>
+        <ol type="a">
+            <li>Press <code>Ctrl + X</code> to exit.</li>
+            <li>Type <code>y</code> and press <code>Enter</code> to confirm saving the changes.</li>
+        </ol>
+    </li>
+</ol>
+
+<h3>3. Starting and Enabling TheHive Service</h3>
+
+<p>With the configuration file updated, we can now start and enable TheHive service.</p>
+
+<ol>
+    <li><strong>Start TheHive:</strong>
+        <ol type="a">
+            <li>Use <code>systemctl start thehive</code> to start the TheHive service.</li>
+        </ol>
+    </li>
+    <li><strong>Enable TheHive Service:</strong>
+        <ol type="a">
+            <li>Use <code>systemctl enable thehive</code> to ensure TheHive starts automatically on system boot.</li>
+        </ol>
+    </li>
+    <li><strong>Verify Service Status:</strong>
+                <ol type="a">
+            <li>Check the TheHive service status with <code>systemctl status thehive</code>.</li>
+        </ol>
+    </li>
+</ol>
+
+<h3>4. Accessing TheHive</h3>
+
+<p>You should now be able to access TheHive through your web browser.</p>
+<ol>
+        <li><strong>Accessing TheHive in the browser:</strong>
+        <ol type="a">
+            <li>Navigate to your TheHive Droplet's public IP address with port <code>9000</code> (e.g., <code>http://&lt;your_public_ip&gt;:9000</code>).</li>
+        </ol>
+    </li>
+</ol>
+
+<p><strong>Remember</strong> to replace <code>&lt;your_public_ip&gt;</code> with the actual public IP address of your TheHive Droplet.</p>
