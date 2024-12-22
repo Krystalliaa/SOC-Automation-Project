@@ -577,3 +577,64 @@ sudo apt-get install -y thehive
 
 <p><strong>Remember</strong> to replace <code>&lt;your_public_ip&gt;</code> with the actual public IP address of your TheHive Droplet.</p>
 
+
+
+<h2>Configuring Wazuh and Installing the Wazuh Agent</h2>
+
+<p>This section details accessing the Wazuh dashboard, retrieving the admin credentials (if needed), and installing the Wazuh agent on the Windows 10 client.</p>
+
+<h3>1. Accessing the Wazuh Dashboard</h3>
+
+<p>Open a web browser on your Windows 10 virtual machine and navigate to the public IP address of your Wazuh Droplet:</p>
+
+<pre><code>http://&lt;your_wazuh_public_ip&gt;</code></pre>
+
+<p>You will be prompted to log in.</p>
+
+<h3>2. Retrieving Wazuh Credentials (If Needed)</h3>
+
+<p>If you did not save the Wazuh admin password during the installation process, you can retrieve it by connecting to your Wazuh Droplet via SSH and doing the following:</p>
+
+<ol>
+    <li>List the files in the current directory:
+    <pre><code>ls</code></pre>
+        <p>This will show you if the <code>wazuh-install-files.tar</code> is present.</p>
+    </li>
+    <li>Extract the files from the tar archive:
+        <pre><code>tar -xvf wazuh-install-files.tar</code></pre>
+    </li>
+    <li>Navigate into the extracted directory:
+        <pre><code>cd wazuh-install-files/</code></pre>
+    </li>
+    <li>List the files in the directory:
+        <pre><code>ls</code></pre>
+    </li>
+    <li>Display the contents of the password file:
+        <pre><code>cat wazuh-passwords.txt</code></pre>
+        <p>This file contains the Wazuh admin password and the Wazuh API user credentials. Copy and save these credentials in a safe place.</p>
+    </li>
+</ol>
+
+<h3>3. Installing the Wazuh Agent on Windows</h3>
+
+<p>Once you've accessed the Wazuh dashboard, you can install the agent on your Windows 10 client.</p>
+
+<ol>
+    <li><strong>Navigate to "Add Agent":</strong> In the Wazuh dashboard, click on the "Add agent" button (the location may vary slightly depending on the Wazuh version).</li>
+    <li><strong>Select Agent Type:</strong> Choose "Windows" as the agent type.</li>
+    <li><strong>Configure Agent Settings:</strong>
+        <ol type="a">
+            <li>For the "Server address", enter the public IP address of your Wazuh Droplet.</li>
+            <li>You can assign a custom name to the agent (optional).</li>
+            <li>Leave the "Select one or more existing groups" as default.</li>
+        </ol>
+    </li>
+    <li><strong>Copy the Installation Command:</strong> The Wazuh dashboard will generate a command for installing the agent. Copy this command.</li>
+    <li><strong>Open an Elevated PowerShell Window:</strong> On your Windows 10 VM, open PowerShell as an administrator (right-click PowerShell and select "Run as administrator").</li>
+    <li><strong>Paste and Execute the Command:</strong> Paste the copied command into the PowerShell window and press Enter to execute it.</li>
+    <li><strong>Start the Wazuh Service:</strong> After the installation completes, start the Wazuh service:
+        <pre><code>net start Wazuhsvc</code></pre>
+    </li>
+    <li><strong>Verify Agent Connection:</strong> Go back to the Wazuh dashboard and wait a minute. The newly installed agent should appear as "Active".</li>
+</ol>
+
