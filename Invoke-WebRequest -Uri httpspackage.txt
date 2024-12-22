@@ -1,8 +1,1 @@
-Invoke-WebRequest -Uri https://packages.wazuh.com/4.x/windows/wazuh-agent-4.7.5-1.msi -OutFile ${env.tmp}\wazuh-agent; msiexec.exe /i ${env.tmp}\wazuh-agent /q WAZUH_MANAGER='188.166.38.69' WAZUH_AGENT_NAME='krysta' WAZUH_REGISTRATION_SERVER='188.166.38.69' 
 
-Wazuh Password  User: admin
-    Password: KVQc4AnXNVFXdpq5YsnHSUJ?lUK?c??p
-
-Password for wazuh API user
-  api_username: 'wazuh'
-  api_password: 'euAtVI0DWwnXd?Q1j?qxFbTMADJA391G'
