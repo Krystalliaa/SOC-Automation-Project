@@ -505,37 +505,26 @@ sudo apt-get install -y thehive
 
 <ol>
     <li><strong>Verify Current Permissions:</strong>
-        <ol type="a">
-            <li>Use <code>ls -la /opt/thp</code> to check the access permissions for the <code>/opt/thp</code> directory (TheHive directory).</li>
-            <li>The output (permissions.png) should show <code>root</code> as the owner. We need to change this.</li>
-        </ol>
+        <p>Use <code>ls -la /opt/thp</code> to check the access permissions for the <code>/opt/thp</code> directory (TheHive directory). The output (permissions.png) should show <code>root</code> as the owner. We need to change this.</p>
     </li>
     <li><strong>Change Ownership:</strong>
-        <ol type="a">
-            <li>Run the following command to grant ownership of <code>/opt/thp</code> and its contents to the <code>thehive</code> user and group:
-                <pre><code>chown -R thehive:thehive /opt/thp</code></pre>
-                <p>The <code>-R</code> flag ensures ownership changes are applied recursively to all files and subdirectories within <code>/opt/thp</code>.</p>
-            </li>
-        </ol>
+        <p>Run the following command to grant ownership of <code>/opt/thp</code> and its contents to the <code>thehive</code> user and group:</p>
+        <pre><code>chown -R thehive:thehive /opt/thp</code></pre>
+        <p>The <code>-R</code> flag ensures ownership changes are applied recursively to all files and subdirectories within <code>/opt/thp</code>.</p>
     </li>
     <li><strong>Verify Ownership Change:</strong>
-        <ol type="a">
-            <li>Run <code>ls -la /opt/thp</code> again. The output should now show <code>thehive</code> as the owner.</li>
-        </ol>
+        <p>Run <code>ls -la /opt/thp</code> again. The output should now show <code>thehive</code> as the owner.</p>
     </li>
 </ol>
 
 <h3>2. Modifying TheHive Configuration File</h3>
 
-<p>Now, we'll edit TheHive's configuration file to set the correct hostnames and base URL.</p>
+<p>TheHive's main configuration is stored in <code>application.conf</code>. We need to adjust some settings to match our setup.</p>
 
 <ol>
     <li><strong>Edit the Configuration File:</strong>
-        <ol type="a">
-            <li>Open the TheHive configuration file with <code>nano</code>:
-               <pre><code>nano /etc/thehive/application.conf</code></pre>
-            </li>
-        </ol>
+        <p>Open the TheHive configuration file with <code>nano</code>:</p>
+        <pre><code>nano /etc/thehive/application.conf</code></pre>
     </li>
     <li><strong>Update Hostnames:</strong>
         <ol type="a">
@@ -545,7 +534,8 @@ sudo apt-get install -y thehive
     </li>
     <li><strong>Update Base URL:</strong>
         <ol type="a">
-            <li>Scroll down and in the <code>application.baseUrl</code> delete the Ip And insert the public ip of your thehive and leave the <code>http://*Public_IP*:9000</code> as is.</li>
+            <li>Scroll down and locate <code>application.baseUrl</code>.</li>
+            <li>Delete the existing IP address and insert the public IP of your TheHive Droplet, keeping the port <code>http://&lt;your_public_ip&gt;:9000</code> intact.</li>
         </ol>
     </li>
     <li><strong>Save and Exit `nano`:</strong>
@@ -558,35 +548,32 @@ sudo apt-get install -y thehive
 
 <h3>3. Starting and Enabling TheHive Service</h3>
 
-<p>With the configuration file updated, we can now start and enable TheHive service.</p>
+<p>Now that the configuration is updated, we can start TheHive service.</p>
 
 <ol>
     <li><strong>Start TheHive:</strong>
-        <ol type="a">
-            <li>Use <code>systemctl start thehive</code> to start the TheHive service.</li>
-        </ol>
+        <p>Use <code>systemctl start thehive</code> to start the TheHive service.</p>
+        <pre><code>systemctl start thehive</code></pre>
     </li>
     <li><strong>Enable TheHive Service:</strong>
-        <ol type="a">
-            <li>Use <code>systemctl enable thehive</code> to ensure TheHive starts automatically on system boot.</li>
-        </ol>
+        <p>Use <code>systemctl enable thehive</code> to ensure TheHive starts automatically on system boot.</p>
+        <pre><code>systemctl enable thehive</code></pre>
     </li>
     <li><strong>Verify Service Status:</strong>
-                <ol type="a">
-            <li>Check the TheHive service status with <code>systemctl status thehive</code>.</li>
-        </ol>
+        <p>Check the TheHive service status with <code>systemctl status thehive</code>.</p>
+        <pre><code>systemctl status thehive</code></pre>
     </li>
 </ol>
 
 <h3>4. Accessing TheHive</h3>
 
-<p>You should now be able to access TheHive through your web browser.</p>
-<ol>
-        <li><strong>Accessing TheHive in the browser:</strong>
-        <ol type="a">
-            <li>Navigate to your TheHive Droplet's public IP address with port <code>9000</code> (e.g., <code>http://&lt;your_public_ip&gt;:9000</code>).</li>
-        </ol>
-    </li>
-</ol>
+<p>You should now be able to access TheHive by opening your web browser and navigating to your TheHive Droplet's public IP address with port 9000 (e.g., <code>http://&lt;your_public_ip&gt;:9000</code>).</p>
+
+<p><strong>Login:</strong> Use the following credentials to log in:</p>
+<ul>
+    <li><strong>Username:</strong> <code>admin@thehive.local</code></li>
+    <li><strong>Password:</strong> <code>secret</code></li>
+</ul>
 
 <p><strong>Remember</strong> to replace <code>&lt;your_public_ip&gt;</code> with the actual public IP address of your TheHive Droplet.</p>
+
