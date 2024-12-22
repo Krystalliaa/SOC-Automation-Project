@@ -545,7 +545,7 @@ sudo apt-get install -y thehive
     </li>
     <li><strong>Update Base URL:</strong>
         <ol type="a">
-            <li>Scroll down and in the <code>application.baseUrl</code> delete the Ip And insert the public ip of your thehive and leave the <code>:9000</code> as is.</li>
+            <li>Scroll down and in the <code>application.baseUrl</code> delete the Ip And insert the public ip of your thehive and leave the <code>http://*Public_IP*:9000</code> as is.</li>
         </ol>
     </li>
     <li><strong>Save and Exit `nano`:</strong>
