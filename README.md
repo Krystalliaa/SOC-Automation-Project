@@ -738,7 +738,7 @@ sudo apt-get install -y thehive
 <ol>
     <li><strong>Check the Wazuh Dashboard:</strong>
         <p>Go to the Wazuh dashboard and navigate to the "Events" section.</p>
-        <p>Ensure you're viewing the correct index (e.g., "wazuh-alerts0*").</p>
+        <p>Ensure you're viewing the correct index (e.g., "wazuh-alerts*").</p>
         <p>Search for "Sysmon" in the search bar. It might take some time for Sysmon events to appear.</p>
     </li>
 </ol>
