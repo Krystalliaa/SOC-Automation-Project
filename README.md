@@ -638,3 +638,125 @@ sudo apt-get install -y thehive
     <li><strong>Verify Agent Connection:</strong> Go back to the Wazuh dashboard and wait a minute. The newly installed agent should appear as "Active".</li>
 </ol>
 
+
+<h2>Configuring Wazuh to Ingest Sysmon Logs on Windows 10</h2>
+
+<p>This section details how to configure Wazuh on your Windows 10 client to ingest logs from Sysmon, enabling you to monitor for suspicious activities like mimikatz usage.</p>
+
+<h3>1. Backing Up the Configuration File</h3>
+
+<p>Before making any changes, it's crucial to back up the original Wazuh agent configuration file.</p>
+
+<ol>
+    <li><strong>Locate the Configuration File:</strong>
+        <p>Navigate to the Wazuh agent configuration directory:</p>
+        <pre><code>C:\Program Files (x86)\ossec-agent</code></pre>
+        <p>Locate the <code>ossec.conf</code> file.</p>
+    </li>
+    <li><strong>Create a Backup:</strong>
+        <p>Right-click the <code>ossec.conf</code> file and select "Copy."</p>
+        <p>Paste the copied file into the same directory and rename it to <code>ossec-backup.conf</code>.</p>
+    </li>
+</ol>
+
+<h3>2. Opening the Configuration File (as Administrator)</h3>
+
+<p>Open the <code>ossec.conf</code> file with administrative privileges.</p>
+
+<ol>
+    <li><strong>Open with Notepad (Admin):</strong>
+        <p>Right-click the <code>ossec.conf</code> file and select "Open with > Notepad."</p>
+        <p>If prompted for administrator privileges, click "Yes."</p>
+    </li>
+</ol>
+
+<h3>3. Understanding Log Analysis Configuration</h3>
+
+<p>The "Log Analysis" section in the <code>ossec.conf</code> file defines which logs the Wazuh agent monitors.</p>
+
+<h3>4. Adding Sysmon Log Ingestion</h3>
+
+<p>We will now add a new <code>&lt;localfile&gt;</code> block to ingest Sysmon logs.</p>
+
+<ol>
+    <li><strong>Copy an Existing &lt;localfile&gt; Block:</strong>
+        <p>Locate an existing <code>&lt;localfile&gt;</code> block within the "Log Analysis" section and copy the entire block.</p>
+    </li>
+    <li><strong>Paste the Block:</strong>
+        <p>Paste the copied block below the original.</p>
+    </li>
+    <li><strong>Configure Sysmon Log Source:</strong>
+        <ol type="a">
+            <li><strong>Change the &lt;location&gt; Tag:</strong>
+                <p>Change the value within the <code>&lt;location&gt;</code> tags to the Sysmon channel name.</p>
+            </li>
+            <li><strong>Obtain the Sysmon Channel Name:</strong>
+                <ol type="i">
+                    <li>Open the Event Viewer.</li>
+                    <li>Expand "Applications and Services Logs" -> "Microsoft-Windows" -> "Sysmon."</li>
+                    <li>Right-click "Operational" and select "Properties."</li>
+                    <li>Copy the value displayed under "Channel Name" (e.g., "Microsoft-Windows-Sysmon/Operational").</li>
+                </ol>
+            </li>
+            <li><strong>Paste the Channel Name:</strong>
+                <p>Paste the copied channel name between the <code>&lt;location&gt;</code> tags in your <code>ossec.conf</code> file.</p>
+            </li>
+        </ol>
+    </li>
+    <li><strong>Disabling Unnecessary Log Sources (Optional):</strong>
+        <p>To prevent Wazuh from forwarding other logs (e.g., application, security, system), you can comment out the corresponding <code>&lt;localfile&gt;</code> blocks by adding <code>#</code> at the beginning of each line within the block.</p>
+    </li>
+</ol>
+
+<h3>5. Saving the Configuration File</h3>
+
+<ol>
+    <li><strong>Save the File:</strong>
+        <p>Try saving the <code>ossec.conf</code> file in Notepad.</p>
+        <p>If you encounter permission issues:</p>
+        <ol type="a">
+            <li>Minimize Notepad.</li>
+            <li>Right-click the <code>ossec.conf</code> file again.</li>
+            <li>Select "Open with > Notepad (Admin)" to ensure you have administrator privileges.</li>
+            <li>Repeat the configuration changes and save the file.</li>
+        </ol>
+    </li>
+</ol>
+
+<h3>6. Restarting the Wazuh Agent Service</h3>
+
+<ol>
+    <li><strong>Restart the Service:</strong>
+        <p>Open the Services window (search for "Services").</p>
+        <p>Locate the "Wazuh Agent" service.</p>
+        <p>Right-click on the service and select "Restart."</p>
+    </li>
+</ol>
+
+<h3>7. Verifying Sysmon Log Ingestion</h3>
+
+<ol>
+    <li><strong>Check the Wazuh Dashboard:</strong>
+        <p>Go to the Wazuh dashboard and navigate to the "Events" section.</p>
+        <p>Ensure you're viewing the correct index (e.g., "wazuh-alerts0*").</p>
+        <p>Search for "Sysmon" in the search bar. It might take some time for Sysmon events to appear.</p>
+    </li>
+</ol>
+
+<h3>8. Downloading Mimikatz (For Testing Purposes Only)</h3>
+
+<p><strong>Disclaimer:</strong> Downloading and running mimikatz on a production system is highly discouraged. This step is for demonstration purposes only to test your Sysmon configuration.</p>
+
+<ol>
+    <li><strong>Disable Windows Defender or Exclude Downloads Folder:</strong>
+        <p>Temporarily disable Windows Defender or create an exclusion for your downloads folder.</p>
+    </li>
+    <li><strong>Download Mimikatz:</strong>
+        <p>Download mimikatz to the excluded downloads folder.</p>
+    </li>
+    <li><strong>Re-enable Windows Defender or Remove Exclusion:</strong>
+        <p>After testing, remember to re-enable Windows Defender or remove the downloads folder exclusion.</p>
+    </li>
+</ol>
+
+
