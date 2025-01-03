@@ -926,3 +926,114 @@ sudo apt-get install -y thehive
             <img src="./images/Mimikatz_detected.png" alt="Mimikatz Detected"></p>
     </li>
 </ol>
+
+
+
+<h2>Integrating Wazuh with Shuffle.io for Alert Automation</h2>
+
+<p>This guide details how to integrate Wazuh with Shuffle.io to automate workflows triggered by Wazuh security alerts.</p>
+
+<h3>1. Create a Shuffle.io Workflow</h3>
+
+<ol>
+    <li><strong>Sign Up for Shuffle.io:</strong>
+        <p>Create an account at https://shuffler.io/.</p>
+    </li>
+    <li><strong>Create a Workflow:</strong>
+        <p>Go to "Workflows" -> "Create Workflow."</p>
+        <p>Name your workflow "SOC Automation Project."</p>
+        <p>Select any two use cases (it doesn't matter for this example).</p>
+        <p>Click "Create."</p>
+    </li>
+    <li><strong>Add Webhook Trigger (Shuffle.png):</strong>
+        <p>From the left menu, select the "Webhook Trigger" and drag it next to the "Change Me" icon.</p>
+        <p>Rename the webhook to "Wazuh-agent."</p>
+        <p>Copy the Webhook URI displayed (Webhook-URI.png).</p>
+    </li>
+    <li><strong>Add Repeat Back Action:</strong>
+        <p>Click the "Change Me" icon next to "Find Actions." </p>
+        <p>Select "Repeat back to me."</p>
+        <p>In the "Call" field, click the "+" sign and select "Execution Argument."</p>
+        <p>Save the action.</p>
+</ol>
+
+<h3>2. Configure Wazuh Manager for Shuffle Integration</h3>
+
+<p>Connect to your Wazuh manager via SSH and configure the integration using the `ossec.conf` file.</p>
+
+<ol>
+    <li><strong>Edit `ossec.conf` (nano):</strong>
+        <p>Type `nano /var/ossec/etc/ossec.conf` to open the configuration file.</p>
+    </li>
+    <li><strong>Add Integration Block:</strong>
+        <p>Scroll to the end of the file, locate the closing `</global>` tag, and add the following integration block, replacing `#THE_URL_WE_COPIED_BEFORE#` with the copied Webhook URI:</p>
+    <pre><code>
+<integration>
+  <name>shuffle</name>
+  <hook_url>#THE_URL_WE_COPIED_BEFORE#</hook_url>
+  <rule_id>100002</rule_id>
+  <alert_format>json</alert_format>
+</integration>
+</code></pre>
+        <p>Ensure proper indentation to match existing blocks.</p>
+    </li>
+    <li><strong>Save and Exit `nano`:</strong>
+        <p>Save the changes (Ctrl + X, Y, Enter).</p>
+    </li>
+    <li><strong>Restart Wazuh Manager:</strong>
+        <p>Restart the Wazuh manager service:</p>
+        <pre><code>systemctl restart wazuh-manager.service</code></pre>
+    </li>
+    <li><strong>Verify Service Status:</strong>
+        <p>Check the service status:</p>
+        <pre><code>systemctl status wazuh-manager.service</code></pre>
+    </li>
+</ol>
+
+<h3>3. Triggering the Workflow (Mimikatz Test)</h3>
+
+<ol>
+    <li><strong>Run Mimikatz on the Client:</strong>
+        <p>On your Windows 10 client, open PowerShell and exit any running mimikatz instance with `exit`.</p>
+        <p>Run mimikatz again with the command `.\mimikatz.exe`.</p>
+    </li>
+    <li><strong>Start Shuffle Workflow (Shuffle-start.png):</strong>
+        <p>In your Shuffle.io instance, click "Start" on the created workflow.</p>
+    </li>
+    <li><strong>Verify Results (results.png):</strong>
+        <p>Click the "Person" button at the bottom. If successful, you should see results from the mimikatz execution.</p>
+        <p>You can expand the results for more details.</p>
+    </li>
+</ol>
+
+<p>This demonstrates how to integrate Wazuh with Shuffle.io to automate workflows triggered by specific Wazuh rules (e.g., rule ID 100002 in this example).</p>
+
+
+<h3>4. Advanced Automation and Integration</h3>
+
+<p>Our Workflow for today:</p>
+<ol>
+    <li>Mimikatz Alert sent to Shuffle</li>
+    <li>Shuffle Receives Mimikatz alerts and extracts SHA256 Hash from the file</li>
+    <li>Check the reputation score with VirusTotal</li>
+    <li>Send details to thehive to create alerts</li>
+    <li>Send email to soc analyst to begin investigation.</li>
+</ol>
+
+<p>When we examine the returned hash values, we notice they are appended with their hash type. For example, <img src="./images/hash-1.png" alt="Hash Example"> shows a value appended with <code>SHA1=</code> followed by the actual hash. To automate further processing, we need to extract only the hash value itself.</p>
+
+<p>If we don't extract the hash, the entire string (including <code>SHA1=</code>) would be sent to services like VirusTotal, which is not the desired behavior. We only want to send the raw hash value to VirusTotal for analysis.</p>
+
+<p>Let's proceed with the extraction. Close the execution argument and click the "Change Me" icon. In the "Find actions" field, type <code>regex</code> and select <code>regex capture group</code>. For the input data, click the <code>+</code> button, then select "Execution argument" -> "hashes," which will populate the field like this: <img src="./images/input-data.png" alt="Input Data">.</p>
+
+<p>If you're unfamiliar with writing regular expressions (regex), you can copy the hash value and use an AI solution like ChatGPT to generate the regex code. An example prompt might look like this: <img src="./images/chat-gpt.png" alt="ChatGPT Regex Request">. Then, paste the generated regex code into the regex section in Shuffle, as shown here: <img src="./images/Shuffler.png" alt="Shuffle Regex Configuration">.</p>
+
+<p>Save the workflow. Click the "Person" icon, then click the refresh button or "rerun workflow" next to "details." Expanding the results will show that the SHA256 hash has been correctly parsed. Now we can automate sending this information to VirusTotal for scoring.</p>
+
+<p>Rename the "Change Me" icon to <code>sha256_Regex</code>. Next, we'll use VirusTotal's API to automate hash checks and retrieve results. To use their API, you'll need a VirusTotal account. Sign up on their website, and once you have an account, copy your API key and return to Shuffle.</p>
+
+<p>In Shuffle, click "Apps," search for <code>VirusTotal</code>, and press Enter. Drag and drop the VirusTotal app into your workflow. Rename the action to <code>VirusTotal</code>. In the "Find actions," we don't need to check an IP address; we want to check a hash. Click the dropdown menu; if you only see one option, wait a few minutes and refresh the page. Select <code>Get a hash report</code>. You can either paste your API key directly into the <code>Apikey</code> field or click the orange <code>+ Authenticate VirusTotal v3</code>, paste your API key, and click "Submit."</p>
+
+<p>In the "id" field, delete the existing content, click the <code>+</code> button, hover over "regex," select "group," and click. Save the workflow again. Click the "Person" icon, select the middle workflow, and rerun it. Let's examine the VirusTotal output. Expanding the results, we see a status of <code>200</code>. Expanding further (<code>0: -> body -> data -> attributes -> last_analysis_stats</code>), we see <code>malicious 64</code>, indicating that 64 scanners detected the file as malicious <img src="./images/malicious.png" alt="Malicious VirusTotal Result">.</p>
+
+<p>To recap: We configured our SOAR platform to receive Wazuh alerts, used regex to extract the SHA256 hash, and used VirusTotal to check its reputation. Next, we'll send the details to thehive to create an alert for case management. In the application tab (bottom left), search for <code>thehive</code>, click it, and drag and drop it into your workflow. Access thehive at <code>http://*thehiveip*:9000</code> with the credentials <code>admin@thehive.local</code> and password <code>secret</code>.</p>
