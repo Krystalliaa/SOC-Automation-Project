@@ -1037,3 +1037,205 @@ sudo apt-get install -y thehive
 <p>In the "id" field, delete the existing content, click the <code>+</code> button, hover over "regex," select "group," and click. Save the workflow again. Click the "Person" icon, select the middle workflow, and rerun it. Let's examine the VirusTotal output. Expanding the results, we see a status of <code>200</code>. Expanding further (<code>0: -> body -> data -> attributes -> last_analysis_stats</code>), we see <code>malicious 64</code>, indicating that 64 scanners detected the file as malicious <img src="./images/malicious.png" alt="Malicious VirusTotal Result">.</p>
 
 <p>To recap: We configured our SOAR platform to receive Wazuh alerts, used regex to extract the SHA256 hash, and used VirusTotal to check its reputation. Next, we'll send the details to thehive to create an alert for case management. In the application tab (bottom left), search for <code>thehive</code>, click it, and drag and drop it into your workflow. Access thehive at <code>http://*thehiveip*:9000</code> with the credentials <code>admin@thehive.local</code> and password <code>secret</code>.</p>
+
+<h2>Creating a New Organization and Users in thehive</h2>
+
+<p>This guide walks you through creating a new organization and users in thehive:</p>
+
+<h3>Creating a New Organization</h3>
+
+<ol>
+    <li>Click the <strong>plus button</strong> in the top corner.</li>
+    <li>Enter your desired organization name (e.g., "Krysta") in the <strong>Name</strong> field.</li>
+    <li>Add a description (e.g., "SOC Automation Project") in the <strong>Description</strong> field.</li>
+    <li>Click <strong>Confirm</strong> to create the organization.</li>
+</ol>
+
+<h3>Adding Users</h3>
+
+<ol>
+    <li>Click the new organization name to access it.</li>
+    <li>Click the <strong>plus button</strong> <img src="./images/new-users.png" alt="New Users Button"> to add users.</li>
+    <li><strong>For a Regular User (Krysta):</strong>
+        <ul>
+            <li>Leave <strong>Type</strong> as <code>Normal</code>.</li>
+            <li>Enter the user's login credentials:
+                <ul>
+                    <li><strong>Login:</strong> <code>krysta@test.com</code></li>
+                    <li><strong>Name:</strong> <code>Krysta</code></li>
+                    <li><strong>Profile:</strong> <code>Analyst</code></li>
+                </ul>
+            </li>
+            <li>Click <strong>Confirm</strong> to create the user.</li>
+        </ul>
+    </li>
+    <li><strong>For a Service User (SOAR):</strong>
+        <ul>
+            <li>Select <code>Service</code> for the <strong>Type</strong>.</li>
+            <li>Enter the service account details:
+                <ul>
+                    <li><strong>Login:</strong> <code>shuffle@test.com</code></li>
+                    <li><strong>Name:</strong> <code>SOAR</code></li>
+                    <li><strong>Profile:</strong> <code>Analyst</code> (Ideally a custom profile with least privilege)</li>
+                </ul>
+            </li>
+            <li>Click <strong>Confirm</strong> to create the user.</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Setting Up User Access</h3>
+
+<ol>
+    <li><strong>For Krysta:</strong>
+        <ul>
+            <li>Hover over Krysta's username and select <strong>Preview</strong>.</li>
+            <li>Scroll down and click <strong>Set a New Password</strong>.</li>
+            <li>Create a password and click <strong>Confirm</strong>.</li>
+            <li>Click outside the window.</li>
+        </ul>
+    </li>
+    <li><strong>For SOAR User (API Key):</strong>
+        <ul>
+            <li>Select preview for the SOAR user.</li>
+            <li>Click <strong>Create API key</strong>.</li>
+            <li>Copy the generated API key and store it securely.</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Logging In and Configuring thehive Integration in Shuffle</h3>
+
+<ol>
+    <li>Log out of the admin account.</li>
+    <li>Log in with Krysta's credentials (<code>krysta@test.com</code> and password).</li>
+    <li><strong>Authenticate thehive in Shuffle:</strong>
+        <ul>
+            <li>Click the <strong>plus button</strong> beside <code>Authenticate</code>.</li>
+            <li>Paste your thehive API key into the designated field.</li>
+            <li>Enter thehive's public IP address and port number in the URL section.</li>
+            <li>Click <strong>Submit</strong>.</li>
+        </ul>
+    </li>
+    <li><strong>Connect thehive to Your Workflow:</strong>
+        <ul>
+            <li>In the workflow editor, click on the Virustotal icon.</li>
+            <li>Drag the blue dot on the Virustotal icon and connect it to the thehive icon.</li>
+        </ul>
+    </li>
+    <li><strong>Configure thehive Alert Creation:</strong>
+         <li><strong>Configure thehive Alert Creation:</strong>
+        <ul>
+            <li>Click on the <strong>date section</strong> (if available). If not, proceed to step 6.</li>
+            <li>Click the <strong>plus button</strong> and select <code>Execution argument -> utc time</code>.</li>
+            <li>Configure the remaining fields for thehive alert creation according to the provided details in the image <img src="./images/date-description.png"> <img src="flag-pap.png"> </li>
+            <li>You can use the provided JSON code in the advanced tab (body section) if you don't have the individual fields (<img src="./images/sourceref.png"> </li>
+        </ul>
+    </li>
+    
+ <p>If you don't have the individual date section and other fields, you can use the provided JSON code in the advanced tab (body section):</p>
+<pre><code>{
+  description": "Mimikatz detected on Computer: $exec.text.win.system.computer from User: $exec.text.win.eventdata.user",
+
+  "externallink": "${externallink}",
+
+  "flag": false,
+
+  "pap": 2,
+
+  "time": "$exec.text.win.eventdata.utcTime",
+
+  "severity": "2",
+
+  "source": "Wazuh",
+
+  "sourceRef": "Rule: 100002",
+
+  "status": "New",
+
+  "summary": "Mimikatz detected on Computer: $exec.text.win.system.computer, ProcessID: $exec.text.win.system.processID and CommandLine: $exec.text.win.eventdata.commandLine",
+
+  "tags": [
+
+    "T1003"
+
+  ],
+
+  "title": "$exec.title",
+
+  "tlp": 2,
+
+  "type": "Internal"
+
+} </pre></code>
+
+
+
+<li><strong>Save the Workflow.</strong></li>
+
+<h3>Modifying the Cloud Firewall (Temporary for Testing)</h3>
+
+<p>Before running the workflow, we need to temporarily modify the cloud firewall to allow inbound traffic on port <code>9000</code>, where our thehive instance resides. This rule will be removed after testing.</p>
+
+<ol>
+    <li>Navigate to your cloud provider's firewall settings (e.g., DigitalOcean):
+        <ul>
+            <li>In DigitalOcean, go to <code>Networking -> Firewalls</code>.</li>
+            <li>Select the relevant firewall.</li>
+        </ul>
+    </li>
+    <li>Create a new firewall rule:
+        <ul>
+            <li>Set the rule type to <code>Custom</code>.</li>
+            <li>Specify port <code>9000</code>.</li>
+            <li>Configure allowed IP addresses:
+                <ul>
+                    <li>Remove all IPv6 addresses.</li>
+                    <li>Keep all IPv4 addresses (allowing access from any source).</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>Save the firewall rule. This will temporarily allow any source to access your machine on port <code>9000</code>.</li>
+</ol>
+
+
+<h3>Verifying the Integration</h3>
+
+<p>Returning to Shuffle, we can now rerun the workflow. Click the "Person" icon and then "Rerun Workflow."</p>
+
+<p>Scrolling down in the workflow execution details, we should see confirmation that thehive integration was successful. Let's verify this in our thehive instance.</p>
+
+<p>Access your thehive instance. You should see that an alert has been automatically created. Refreshing the thehive instance will display the new alert. Opening the alert provides more details about the event <img src="./images/success.png" alt="Successful thehive Alert Creation">.</p>
+
+<p>Adding more information to the "Summary" field in the workflow configuration will provide even more detailed context within thehive alert, further streamlining investigations.</p>
+
+
+<h3>Sending an Email Notification</h3>
+
+<p>The next step is to send an email notification to our analyst containing relevant information. To achieve this:</p>
+
+<ol>
+    <li>Click on "Apps" in the bottom left corner.</li>
+    <li>Drag and drop the "Email" application into the workflow.</li>
+    <li>Connect the VirusTotal action to the Email action.</li>
+    <li>Configure the email settings:
+        <ul>
+            <li>Enter the recipient's email address (any valid email address can be used).</li>
+            <li>Set the subject to <code>"Mimikatz detected!"</code>.</li>
+            <li>Configure the email body:
+                <ul>
+                    <li><code>"Time: "</code> Execution argument -> <code>utcTime</code></li>
+                    <li><code>"Title:"</code> Execution argument -> <code>title</code></li>
+                    <li><code>"Host:"</code> Execution argument -> <code>computer</code></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+</ol>
+
+<p>Save the workflow and rerun it.</p>
+
+<p>Success! The email notification should be received, completing the home lab setup.</p>
+
+
