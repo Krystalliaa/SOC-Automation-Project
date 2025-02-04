@@ -1213,7 +1213,7 @@ sudo apt-get install -y thehive
 
 <h3>Sending an Email Notification</h3>
 
-<p>The next step is to send an email notification to our analyst containing relevant information. To achieve this:</p>
+<p>The next step is to send an email notification to our analyst using Shuffle containing relevant information. To achieve this:</p>
 
 <ol>
     <li>Click on "Apps" in the bottom left corner.</li>
